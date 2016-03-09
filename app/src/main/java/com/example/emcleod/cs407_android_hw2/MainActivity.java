@@ -32,7 +32,9 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -44,6 +46,10 @@ public class MainActivity extends Activity {
     GoogleAccountCredential mCredential;
     private TextView mOutputText;
     ProgressDialog mProgress;
+
+    private ListView eventListView;
+    private String[] eventStringArray = {"A", "B", "C"};
+
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
@@ -77,8 +83,22 @@ public class MainActivity extends Activity {
         mOutputText.setMovementMethod(new ScrollingMovementMethod());
         activityLayout.addView(mOutputText);
 
+
+        ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, eventStringArray);
+
+        eventListView = new ListView(this);
+        eventListView.setLayoutParams(tlp);
+        eventListView.setPadding(16, 16, 16, 16);
+        eventListView.setVerticalScrollBarEnabled(true);
+        eventListView.setAdapter(myAdapter);
+        //eventListView.setMovementMethod(new ScrollingMovementMethod());
+        activityLayout.addView(eventListView);
+
+
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling Google Calendar API ...");
+
 
         setContentView(activityLayout);
 
