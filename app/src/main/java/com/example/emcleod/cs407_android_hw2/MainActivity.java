@@ -33,8 +33,11 @@ import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -48,7 +51,11 @@ public class MainActivity extends Activity {
     ProgressDialog mProgress;
 
     private ListView eventListView;
-    private String[] eventStringArray = {"A", "B", "C", "D", "E", "F", "G", "I", "J", "k"};
+    private String[] eventStringArray = {"", "", "", "", "", "", "", "", "", ""};
+
+    private Button prevDayButton;
+    private Button nextDayButton;
+    private Button addEventButton;
 
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
@@ -75,6 +82,35 @@ public class MainActivity extends Activity {
         ViewGroup.LayoutParams tlp = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        ViewGroup.LayoutParams dlp = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout dateSelectLayout = new LinearLayout(this);
+        dateSelectLayout.setLayoutParams(dlp);
+        dateSelectLayout.setOrientation(LinearLayout.HORIZONTAL);
+        activityLayout.addView(dateSelectLayout);
+
+        TableRow.LayoutParams params = new TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+
+        prevDayButton = new Button(this);
+        prevDayButton.setText("Previous Day");
+        prevDayButton.setPadding(16, 16, 16, 16);
+        prevDayButton.setLayoutParams(params);
+        dateSelectLayout.addView(prevDayButton);
+
+        nextDayButton = new Button(this);
+        nextDayButton.setText("Next Day");
+        nextDayButton.setPadding(16, 16, 16, 16);
+        nextDayButton.setLayoutParams(params);
+        dateSelectLayout.addView(nextDayButton);
+
+
+        addEventButton = new Button(this);
+        addEventButton.setText("Add an Event");
+        addEventButton.setPadding(16, 16, 16, 16);
+        activityLayout.addView(addEventButton);
 
         mOutputText = new TextView(this);
         mOutputText.setLayoutParams(tlp);
@@ -322,9 +358,11 @@ public class MainActivity extends Activity {
                 //output.add(0, "Data retrieved using the Google Calendar API:");
                 mOutputText.setText(TextUtils.join("\n", output));
 
+                String[] tempArray = new String[10];
                 for (int i = 0; i < output.size(); i++) {
                     eventStringArray[i] = output.get(i);
                 }
+                eventStringArray = tempArray;
             }
         }
 
