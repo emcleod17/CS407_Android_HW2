@@ -31,6 +31,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -110,6 +111,12 @@ public class MainActivity extends Activity {
         addEventButton = new Button(this);
         addEventButton.setText("Add an Event");
         addEventButton.setPadding(16, 16, 16, 16);
+        addEventButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AddEventActivity.class);
+                startActivity(intent);
+            }
+        });
         activityLayout.addView(addEventButton);
 
         mOutputText = new TextView(this);

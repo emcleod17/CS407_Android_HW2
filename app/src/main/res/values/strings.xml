@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CS407_Android_HW2</string>
+    <string name="title_activity_add_event">Add a New Event</string>
 </resources>
