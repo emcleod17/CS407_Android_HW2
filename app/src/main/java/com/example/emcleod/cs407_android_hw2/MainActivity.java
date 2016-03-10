@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
     ProgressDialog mProgress;
 
     private ListView eventListView;
-    private String[] eventStringArray = {"A", "B", "C"};
+    private String[] eventStringArray = {"A", "B", "C", "D", "E", "F", "G", "I", "J", "k"};
 
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
@@ -319,8 +319,12 @@ public class MainActivity extends Activity {
             if (output == null || output.size() == 0) {
                 mOutputText.setText("No results returned.");
             } else {
-                output.add(0, "Data retrieved using the Google Calendar API:");
+                //output.add(0, "Data retrieved using the Google Calendar API:");
                 mOutputText.setText(TextUtils.join("\n", output));
+
+                for (int i = 0; i < output.size(); i++) {
+                    eventStringArray[i] = output.get(i);
+                }
             }
         }
 
