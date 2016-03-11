@@ -558,7 +558,22 @@ public class MainActivity extends Activity {
         dialogBuilder.setMessage("Delete selected Event?");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-
+                com.google.api.services.calendar.Calendar mService = null;
+                HttpTransport transport = AndroidHttp.newCompatibleTransport();
+                JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+                mService = new com.google.api.services.calendar.Calendar.Builder(
+                        transport, jsonFactory, mCredential)
+                        .setApplicationName("Google Calendar API Android Quickstart")
+                        .build();
+                DateTime now = new DateTime(System.currentTimeMillis());
+                List<String> eventStrings = new ArrayList<String>();
+                Events events = mService.events().list("primary")
+                        .setMaxResults(100)
+                        .setTimeMin(now)
+                        .setOrderBy("startTime")
+                        .setSingleEvents(true)
+                        .execute();
+                //------------------------------------------------------------------------------------------------------------
             }
         });
         dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
