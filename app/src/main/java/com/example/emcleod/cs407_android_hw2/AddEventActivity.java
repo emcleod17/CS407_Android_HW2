@@ -99,21 +99,6 @@ public class AddEventActivity extends AppCompatActivity {
                 HttpTransport transport = AndroidHttp.newCompatibleTransport();
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
-                //GlobalState state = ((GlobalState) getApplication());
-                //GoogleAccountCredential credential = state.getCredential();
-
-                mService = new com.google.api.services.calendar.Calendar.Builder(
-                        transport, jsonFactory, credential)
-                        .setApplicationName("Google Calendar API Android Quickstart")
-                        .build();
-
-                String calendarId = "primary";
-                /*try{
-                    event = mService.events().insert(calendarId, event).execute();
-                } catch (Exception e) {
-                    //uh oh something bad happened
-                }*/
-
                 String[] extras = {eventName_editText.getText().toString(), eventStart, eventEnd};
 
                 Intent intent = new Intent(AddEventActivity.this, MainActivity.class);

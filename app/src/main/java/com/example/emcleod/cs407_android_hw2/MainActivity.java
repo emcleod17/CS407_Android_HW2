@@ -128,9 +128,6 @@ public class MainActivity extends Activity {
         addEventButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, AddEventActivity.class);
-                //GlobalState state = ((GlobalState) getApplication());
-                //state.setCredential(mCredential);
-                //intent.putExtra("cred", mCredential);
                 startActivity(intent);
             }
         });
@@ -585,29 +582,7 @@ public class MainActivity extends Activity {
         }
 
         private void deleteEvent() throws IOException {
-            /*Event event = new Event()
-                    .setSummary(eventInfoArray[0]);
 
-            DateTime startDateTime = new DateTime(eventInfoArray[1]);
-            EventDateTime start = new EventDateTime()
-                    .setDateTime(startDateTime)
-                    .setTimeZone("America/Chicago");
-            event.setStart(start);
-
-            DateTime endDateTime = new DateTime(eventInfoArray[2]);
-            EventDateTime end = new EventDateTime()
-                    .setDateTime(endDateTime)
-                    .setTimeZone("America/Chicago");
-            event.setEnd(end);
-
-            com.google.api.services.calendar.Calendar mService;
-            HttpTransport transport = AndroidHttp.newCompatibleTransport();
-            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-            mService = new com.google.api.services.calendar.Calendar.Builder(
-                    transport, jsonFactory, mCredential)
-                    .setApplicationName("Google Calendar API Android Quickstart")
-                    .build();
-            String calendarId = "primary";*/
             try{
                 mService.events().delete("primary", eventID).execute();
             } catch (Exception e) {
