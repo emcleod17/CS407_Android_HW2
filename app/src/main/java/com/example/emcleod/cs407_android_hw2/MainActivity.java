@@ -20,10 +20,13 @@ import com.google.api.services.calendar.model.*;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Application;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -34,6 +37,7 @@ import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -132,7 +136,7 @@ public class MainActivity extends Activity {
 
         errorCheckerText = new TextView(this);
         errorCheckerText.setLayoutParams(tlp);
-        errorCheckerText.setPadding(16,16,16,16);
+        errorCheckerText.setPadding(16, 16, 16, 16);
         activityLayout.addView(errorCheckerText);
 
         mOutputText = new TextView(this);
@@ -151,7 +155,12 @@ public class MainActivity extends Activity {
         eventListView.setPadding(16, 16, 16, 16);
         eventListView.setVerticalScrollBarEnabled(true);
         eventListView.setAdapter(myAdapter);
-        //eventListView.setMovementMethod(new ScrollingMovementMethod());
+        eventListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                openDeleteDialog(view, position);
+            }
+        });
         activityLayout.addView(eventListView);
 
 
@@ -542,5 +551,24 @@ public class MainActivity extends Activity {
         }
 
     }
+
+    private void openDeleteDialog(View v, int p) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        dialogBuilder.setTitle("Delete Event");
+        dialogBuilder.setMessage("Delete selected Event?");
+        dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+
+            }
+        });
+        dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alertDialog = dialogBuilder.create();
+        alertDialog.show();
+    }
+
 
 }
