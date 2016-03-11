@@ -50,6 +50,7 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -67,6 +68,7 @@ public class MainActivity extends Activity {
     private Button addEventButton;
 
     private String[] eventInfoArray;
+    private List<Event> currentEventList;
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
@@ -158,7 +160,7 @@ public class MainActivity extends Activity {
         eventListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                openDeleteDialog(view, position);
+                openDeleteDialog(parent, view, position);
             }
         });
         activityLayout.addView(eventListView);
@@ -404,6 +406,7 @@ public class MainActivity extends Activity {
                     .setSingleEvents(true)
                     .execute();
             List<Event> items = events.getItems();
+            currentEventList = events.getItems();
 
             for (Event event : items) {
                 DateTime start = event.getStart().getDateTime();
@@ -413,7 +416,7 @@ public class MainActivity extends Activity {
                     start = event.getStart().getDate();
                 }
                 eventStrings.add(
-                        String.format("%s (%s)", event.getSummary(), start));
+                        String.format("%s @ (%s)", event.getSummary(), start));
             }
             return eventStrings;
         }
@@ -552,13 +555,118 @@ public class MainActivity extends Activity {
 
     }
 
-    private void openDeleteDialog(View v, int p) {
+    private class DeleteEventTask extends AsyncTask<String, Void, String> {
+        private com.google.api.services.calendar.Calendar mService = null;
+        private String eventID = null;
+        private Exception mLastError = null;
+
+
+        public DeleteEventTask(GoogleAccountCredential credential, String eventTBDid) {
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.calendar.Calendar.Builder(
+                    transport, jsonFactory, credential)
+                    .setApplicationName("Google Calendar API Android Quickstart")
+                    .build();
+            eventID = eventTBDid;
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                deleteEvent();
+            } catch (Exception e) {
+                //oh no
+                mLastError = e;
+                cancel(true);
+                return null;
+            }
+            return "success";
+        }
+
+        private void deleteEvent() throws IOException {
+            /*Event event = new Event()
+                    .setSummary(eventInfoArray[0]);
+
+            DateTime startDateTime = new DateTime(eventInfoArray[1]);
+            EventDateTime start = new EventDateTime()
+                    .setDateTime(startDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setStart(start);
+
+            DateTime endDateTime = new DateTime(eventInfoArray[2]);
+            EventDateTime end = new EventDateTime()
+                    .setDateTime(endDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setEnd(end);
+
+            com.google.api.services.calendar.Calendar mService;
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.calendar.Calendar.Builder(
+                    transport, jsonFactory, mCredential)
+                    .setApplicationName("Google Calendar API Android Quickstart")
+                    .build();
+            String calendarId = "primary";*/
+            try{
+                mService.events().delete("primary", eventID).execute();
+            } catch (Exception e) {
+                errorCheckerText.setText(e.getMessage());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            //new MakeRequestTask(mCredential).execute();
+        }
+
+        @Override
+        protected void onCancelled() {
+            mProgress.hide();
+            if (mLastError != null) {
+                if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
+                    showGooglePlayServicesAvailabilityErrorDialog(
+                            ((GooglePlayServicesAvailabilityIOException) mLastError)
+                                    .getConnectionStatusCode());
+                    mOutputText.setText("first error");
+                } else if (mLastError instanceof UserRecoverableAuthIOException) {
+                    startActivityForResult(
+                            ((UserRecoverableAuthIOException) mLastError).getIntent(),
+                            MainActivity.REQUEST_AUTHORIZATION);
+                    mOutputText.setText("second error");
+                } else {
+                    mOutputText.setText("The following error occurred:\n"
+                            + mLastError.getMessage());
+                }
+            } else {
+                mOutputText.setText("Request cancelled.");
+            }
+        }
+
+    }
+
+    private void openDeleteDialog(final AdapterView<?> adapter, View view, final int pos) {
+        //Event eventToDelete = v.getAdapter().getView(p, null, v);
+
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
         dialogBuilder.setTitle("Delete Event");
         dialogBuilder.setMessage("Delete selected Event?");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                com.google.api.services.calendar.Calendar mService = null;
+
+                String selectedEventData = (String) adapter.getItemAtPosition(pos);
+                String[] eventArray = selectedEventData.split("@");
+                String selectedEventName = eventArray[0].trim();
+                String eventTBDid = "";
+                Iterator<Event> itr = currentEventList.iterator();
+                while (itr.hasNext()) {
+                    Event tempEvent = itr.next();
+                    if (tempEvent.getSummary().equals(selectedEventName)) {
+                        eventTBDid = tempEvent.getId();
+                    }
+                }
+
+                /*com.google.api.services.calendar.Calendar mService = null;
                 HttpTransport transport = AndroidHttp.newCompatibleTransport();
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
                 mService = new com.google.api.services.calendar.Calendar.Builder(
@@ -566,13 +674,22 @@ public class MainActivity extends Activity {
                         .setApplicationName("Google Calendar API Android Quickstart")
                         .build();
                 DateTime now = new DateTime(System.currentTimeMillis());
-                List<String> eventStrings = new ArrayList<String>();
-                Events events = mService.events().list("primary")
+                List<String> eventStrings = new ArrayList<String>();*/
+
+                new DeleteEventTask(mCredential, eventTBDid).execute();
+
+
+               /* try {
+                    mService.events().delete("primary", eventTBDid).execute();
+                } catch (Exception e) {
+                    //probably IOException
+                }*/
+                /*Events events = mService.events().list("primary")
                         .setMaxResults(100)
                         .setTimeMin(now)
                         .setOrderBy("startTime")
                         .setSingleEvents(true)
-                        .execute();
+                        .execute();*/
                 //------------------------------------------------------------------------------------------------------------
             }
         });
