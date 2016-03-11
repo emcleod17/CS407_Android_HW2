@@ -1,5 +1,6 @@
 package com.example.emcleod.cs407_android_hw2;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,7 +12,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
 
 public class AddEventActivity extends AppCompatActivity {
 
@@ -68,9 +76,49 @@ public class AddEventActivity extends AppCompatActivity {
                 String eventYear = rawEventDate.substring(0, 4);
                 String rawMonth = rawEventDate.substring(5, 7);
                 int tempMonth = Integer.parseInt(rawMonth) -1;
-                String eventMonth = "" + tempMonth;
+                String eventMonth = "";
+                if (tempMonth <10) {
+                    eventMonth += "0";
+                }
+                eventMonth += tempMonth;
                 String eventDay = rawEventDate.substring(8,10);
-                String eventDate = eventYear+"-"+eventMonth+"-"+eventDay+"T";
+                String eventDate = eventYear+"-"+eventMonth+"-"+eventDay;
+
+                String eventStart = eventDate+"T"+eventStart_editText.getText().toString()+":00-05:00";
+                DateTime startDateTime = new DateTime(eventStart);
+                EventDateTime start = new EventDateTime()
+                        .setDateTime(startDateTime)
+                        .setTimeZone("America/Chicago");
+                event.setStart(start);
+
+                String eventEnd = eventDate+"T"+eventEnd_editText.getText().toString()+":00-05:00";
+                DateTime endDateTime = new DateTime(eventEnd);
+                EventDateTime end = new EventDateTime()
+                        .setDateTime(endDateTime)
+                        .setTimeZone("America/Chicago");
+                event.setStart(end);
+
+                com.google.api.services.calendar.Calendar mService;
+                HttpTransport transport = AndroidHttp.newCompatibleTransport();
+                JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+                GlobalState state = ((GlobalState) getApplication());
+                GoogleAccountCredential credential = state.getCredential();
+
+                mService = new com.google.api.services.calendar.Calendar.Builder(
+                        transport, jsonFactory, credential)
+                        .setApplicationName("Google Calendar API Android Quickstart")
+                        .build();
+
+                String calendarId = "primary";
+                try{
+                    event = mService.events().insert(calendarId, event).execute();
+                } catch (Exception e) {
+                    //uh oh something bad happened
+                }
+
+                Intent intent = new Intent(AddEventActivity.this, MainActivity.class);
+                startActivity(intent);
             }
         });
     }

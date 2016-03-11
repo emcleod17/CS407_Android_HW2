@@ -20,6 +20,7 @@ import com.google.api.services.calendar.model.*;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.Application;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -114,6 +115,8 @@ public class MainActivity extends Activity {
         addEventButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, AddEventActivity.class);
+                GlobalState state = ((GlobalState) getApplication());
+                state.setCredential(mCredential);
                 startActivity(intent);
             }
         });
@@ -394,4 +397,6 @@ public class MainActivity extends Activity {
             }
         }
     }
+
+
 }
