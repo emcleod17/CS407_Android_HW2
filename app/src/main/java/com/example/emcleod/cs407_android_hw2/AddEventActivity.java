@@ -61,6 +61,9 @@ public class AddEventActivity extends AppCompatActivity {
 
         setContentView(activityLayout);*/
 
+        final GoogleAccountCredential credential = GoogleAccountCredential.usingAudience(this,
+                "server:client_id:1-web-app.apps.googleusercontent.com");
+
         eventName_editText = (EditText) findViewById(R.id.eventName_editText);
         eventDate_editText = (EditText) findViewById(R.id.eventDate_editText);
         eventStart_editText = (EditText) findViewById(R.id.eventStart_editText);
@@ -74,13 +77,7 @@ public class AddEventActivity extends AppCompatActivity {
 
                 String rawEventDate = eventDate_editText.getText().toString();
                 String eventYear = rawEventDate.substring(0, 4);
-                String rawMonth = rawEventDate.substring(5, 7);
-                int tempMonth = Integer.parseInt(rawMonth) -1;
-                String eventMonth = "";
-                if (tempMonth <10) {
-                    eventMonth += "0";
-                }
-                eventMonth += tempMonth;
+                String eventMonth = rawEventDate.substring(5, 7);
                 String eventDay = rawEventDate.substring(8,10);
                 String eventDate = eventYear+"-"+eventMonth+"-"+eventDay;
 
@@ -102,8 +99,8 @@ public class AddEventActivity extends AppCompatActivity {
                 HttpTransport transport = AndroidHttp.newCompatibleTransport();
                 JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
-                GlobalState state = ((GlobalState) getApplication());
-                GoogleAccountCredential credential = state.getCredential();
+                //GlobalState state = ((GlobalState) getApplication());
+                //GoogleAccountCredential credential = state.getCredential();
 
                 mService = new com.google.api.services.calendar.Calendar.Builder(
                         transport, jsonFactory, credential)
@@ -111,13 +108,16 @@ public class AddEventActivity extends AppCompatActivity {
                         .build();
 
                 String calendarId = "primary";
-                try{
+                /*try{
                     event = mService.events().insert(calendarId, event).execute();
                 } catch (Exception e) {
                     //uh oh something bad happened
-                }
+                }*/
+
+                String[] extras = {eventName_editText.getText().toString(), eventStart, eventEnd};
 
                 Intent intent = new Intent(AddEventActivity.this, MainActivity.class);
+                intent.putExtra("eventArray", extras);
                 startActivity(intent);
             }
         });

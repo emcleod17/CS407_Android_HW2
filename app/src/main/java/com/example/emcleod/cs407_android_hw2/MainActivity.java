@@ -41,16 +41,19 @@ import android.widget.ListView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 
 public class MainActivity extends Activity {
     GoogleAccountCredential mCredential;
     private TextView mOutputText;
     ProgressDialog mProgress;
+    private TextView errorCheckerText;
 
     private ListView eventListView;
     private String[] eventStringArray = {"", "", "", "", "", "", "", "", "", ""};
@@ -59,12 +62,13 @@ public class MainActivity extends Activity {
     private Button nextDayButton;
     private Button addEventButton;
 
+    private String[] eventInfoArray;
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
+    private static final String[] SCOPES = { CalendarScopes.CALENDAR };
 
     /**
      * Create the main activity.
@@ -73,6 +77,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Bundle extras = getIntent().getExtras();
+
+
         LinearLayout activityLayout = new LinearLayout(this);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -115,12 +122,18 @@ public class MainActivity extends Activity {
         addEventButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, AddEventActivity.class);
-                GlobalState state = ((GlobalState) getApplication());
-                state.setCredential(mCredential);
+                //GlobalState state = ((GlobalState) getApplication());
+                //state.setCredential(mCredential);
+                //intent.putExtra("cred", mCredential);
                 startActivity(intent);
             }
         });
         activityLayout.addView(addEventButton);
+
+        errorCheckerText = new TextView(this);
+        errorCheckerText.setLayoutParams(tlp);
+        errorCheckerText.setPadding(16,16,16,16);
+        activityLayout.addView(errorCheckerText);
 
         mOutputText = new TextView(this);
         mOutputText.setLayoutParams(tlp);
@@ -154,6 +167,50 @@ public class MainActivity extends Activity {
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff())
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+
+        if (extras !=null) {
+            String[] eventArray = extras.getStringArray("eventArray");
+            eventInfoArray = eventArray;
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    new AddEventTask(mCredential).execute();
+                }
+            });
+
+
+            /*Event event = new Event()
+                    .setSummary(eventArray[0]);
+
+            DateTime startDateTime = new DateTime(eventArray[1]);
+            EventDateTime start = new EventDateTime()
+                    .setDateTime(startDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setStart(start);
+
+            DateTime endDateTime = new DateTime(eventArray[2]);
+            EventDateTime end = new EventDateTime()
+                    .setDateTime(endDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setStart(end);
+
+            com.google.api.services.calendar.Calendar mService;
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.calendar.Calendar.Builder(
+                    transport, jsonFactory, mCredential)
+                    .setApplicationName("Google Calendar API Android Quickstart")
+                    .build();
+            String calendarId = "primary";
+            try{
+                event = mService.events().insert(calendarId, event).execute();
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
+            }*/
+
+            //Toast.makeText(getApplicationContext(), "the bundle wasn't empty at least", Toast.LENGTH_LONG).show();
+
+        }
     }
 
 
@@ -398,5 +455,92 @@ public class MainActivity extends Activity {
         }
     }
 
+    private class AddEventTask extends AsyncTask<String, Void, String> {
+        private com.google.api.services.calendar.Calendar mService = null;
+        private Exception mLastError = null;
+
+
+        public AddEventTask(GoogleAccountCredential credential) {
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.calendar.Calendar.Builder(
+                    transport, jsonFactory, credential)
+                    .setApplicationName("Google Calendar API Android Quickstart")
+                    .build();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                sendEvent();
+            } catch (Exception e) {
+                //oh no
+                mLastError = e;
+                cancel(true);
+                return null;
+            }
+            return "success";
+        }
+
+        private void sendEvent() throws IOException {
+            Event event = new Event()
+                    .setSummary(eventInfoArray[0]);
+
+            DateTime startDateTime = new DateTime(eventInfoArray[1]);
+            EventDateTime start = new EventDateTime()
+                    .setDateTime(startDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setStart(start);
+
+            DateTime endDateTime = new DateTime(eventInfoArray[2]);
+            EventDateTime end = new EventDateTime()
+                    .setDateTime(endDateTime)
+                    .setTimeZone("America/Chicago");
+            event.setEnd(end);
+
+            com.google.api.services.calendar.Calendar mService;
+            HttpTransport transport = AndroidHttp.newCompatibleTransport();
+            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+            mService = new com.google.api.services.calendar.Calendar.Builder(
+                    transport, jsonFactory, mCredential)
+                    .setApplicationName("Google Calendar API Android Quickstart")
+                    .build();
+            String calendarId = "primary";
+            try{
+                event = mService.events().insert(calendarId, event).execute();
+            } catch (Exception e) {
+                errorCheckerText.setText(e.getMessage());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            //new MakeRequestTask(mCredential).execute();
+        }
+
+        @Override
+        protected void onCancelled() {
+            mProgress.hide();
+            if (mLastError != null) {
+                if (mLastError instanceof GooglePlayServicesAvailabilityIOException) {
+                    showGooglePlayServicesAvailabilityErrorDialog(
+                            ((GooglePlayServicesAvailabilityIOException) mLastError)
+                                    .getConnectionStatusCode());
+                    mOutputText.setText("first error");
+                } else if (mLastError instanceof UserRecoverableAuthIOException) {
+                    startActivityForResult(
+                            ((UserRecoverableAuthIOException) mLastError).getIntent(),
+                            MainActivity.REQUEST_AUTHORIZATION);
+                    mOutputText.setText("second error");
+                } else {
+                    mOutputText.setText("The following error occurred:\n"
+                            + mLastError.getMessage());
+                }
+            } else {
+                mOutputText.setText("Request cancelled.");
+            }
+        }
+
+    }
 
 }
