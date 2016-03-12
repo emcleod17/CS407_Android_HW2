@@ -184,6 +184,19 @@ public class MainActivity extends Activity {
                 Log.d("after invalidate", "after invalidation");*/
                 //myAdapter.notifyDataSetChanged();
                 //eventListView.invalidate();
+                boolean hasNulls = false;
+                for (int i = 0; i < eventStringArray.length; i++) {
+                    if (eventStringArray[i] == null) {
+                        hasNulls = true;
+                    }
+                }
+                if (hasNulls) {
+                    Toast.makeText(getApplicationContext(), "msg msg", Toast.LENGTH_LONG).show();
+                    Log.d("nulls", "yep nulls");
+                }
+                if (!hasNulls) {
+                    Log.d("no nulls","no nulls");
+                }
             }
         });
         activityLayout.addView(eventListView);
@@ -659,29 +672,16 @@ public class MainActivity extends Activity {
                 eventStringArray = tempEventArray;
 
                 //while (!deleteDone) {}
-//TODO: Make a new activity to handle updating the adapter?
                 deleteDone = false;
-                myAdapter.notifyDataSetChanged();
+                //updateAdapter();
+
+                /*myAdapter.notifyDataSetChanged();
                 myAdapter = new ArrayAdapter<String>(MainActivity,
                         android.R.layout.simple_list_item_1, eventStringArray);
-                eventListView.setAdapter(myAdapter);
+                eventListView.setAdapter(myAdapter);*/
                 //eventListView.invalidate();
-
-                /*Log.d("before wait1", "about to wait");
-                try {
-                    TimeUnit.MILLISECONDS.sleep(5000);
-                } catch(InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                }
-                Log.d("after wait1", "finished waiting");
-
-                myAdapter.notifyDataSetChanged();
-                Log.d("after notify1", "after notify");
-                myAdapter = new ArrayAdapter<String>(MainActivity.this,
-                        android.R.layout.simple_list_item_1, eventStringArray);
-                Log.d("after reassigning1", "after reassignment");
-                eventListView.invalidate();
-                Log.d("after invalidate1", "after invalidation");*/
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                startActivity(intent);
 
             }
         });
@@ -694,5 +694,13 @@ public class MainActivity extends Activity {
         alertDialog.show();
     }
 
+/*
+    public void updateAdapter() {
+        myAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, eventStringArray);
+        eventListView.setAdapter(myAdapter);
+        eventListView.invalidate();
+    }
+*/
 
 }
