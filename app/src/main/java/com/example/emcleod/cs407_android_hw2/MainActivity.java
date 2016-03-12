@@ -35,10 +35,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -50,9 +52,11 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
     GoogleAccountCredential mCredential;
@@ -60,6 +64,7 @@ public class MainActivity extends Activity {
     ProgressDialog mProgress;
     private TextView errorCheckerText;
 
+    ArrayAdapter<String> myAdapter;
     private ListView eventListView;
     private String[] eventStringArray = {"", "", "", "", "", "", "", "", "", ""};
 
@@ -75,6 +80,8 @@ public class MainActivity extends Activity {
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR };
+
+    public boolean deleteDone = false;
 
     /**
      * Create the main activity.
@@ -136,17 +143,17 @@ public class MainActivity extends Activity {
         errorCheckerText = new TextView(this);
         errorCheckerText.setLayoutParams(tlp);
         errorCheckerText.setPadding(16, 16, 16, 16);
-        activityLayout.addView(errorCheckerText);
+        //activityLayout.addView(errorCheckerText);
 
         mOutputText = new TextView(this);
         mOutputText.setLayoutParams(tlp);
         mOutputText.setPadding(16, 16, 16, 16);
         mOutputText.setVerticalScrollBarEnabled(true);
         mOutputText.setMovementMethod(new ScrollingMovementMethod());
-        activityLayout.addView(mOutputText);
+        //activityLayout.addView(mOutputText);
 
 
-        ArrayAdapter<String> myAdapter = new ArrayAdapter<String>(this,
+        myAdapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, eventStringArray);
 
         eventListView = new ListView(this);
@@ -158,6 +165,25 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 openDeleteDialog(parent, view, position);
+                //while (!DeleteEventTask.deleteDone) {
+                //new MakeRequestTask(mCredential).execute();
+                /*Log.d("before wait", "about to wait");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(3000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                Log.d("after wait", "finished waiting");
+
+                myAdapter.notifyDataSetChanged();
+                Log.d("after notify", "after notify");
+                myAdapter = new ArrayAdapter<String>(MainActivity.this,
+                        android.R.layout.simple_list_item_1, eventStringArray);
+                Log.d("after reassigning", "after reassignment");
+                eventListView.invalidate();
+                Log.d("after invalidate", "after invalidation");*/
+                //myAdapter.notifyDataSetChanged();
+                //eventListView.invalidate();
             }
         });
         activityLayout.addView(eventListView);
@@ -185,38 +211,6 @@ public class MainActivity extends Activity {
                     new AddEventTask(mCredential).execute();
                 }
             });
-
-
-            /*Event event = new Event()
-                    .setSummary(eventArray[0]);
-
-            DateTime startDateTime = new DateTime(eventArray[1]);
-            EventDateTime start = new EventDateTime()
-                    .setDateTime(startDateTime)
-                    .setTimeZone("America/Chicago");
-            event.setStart(start);
-
-            DateTime endDateTime = new DateTime(eventArray[2]);
-            EventDateTime end = new EventDateTime()
-                    .setDateTime(endDateTime)
-                    .setTimeZone("America/Chicago");
-            event.setStart(end);
-
-            com.google.api.services.calendar.Calendar mService;
-            HttpTransport transport = AndroidHttp.newCompatibleTransport();
-            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-            mService = new com.google.api.services.calendar.Calendar.Builder(
-                    transport, jsonFactory, mCredential)
-                    .setApplicationName("Google Calendar API Android Quickstart")
-                    .build();
-            String calendarId = "primary";
-            try{
-                event = mService.events().insert(calendarId, event).execute();
-            } catch (Exception e) {
-                Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
-            }*/
-
-            //Toast.makeText(getApplicationContext(), "the bundle wasn't empty at least", Toast.LENGTH_LONG).show();
 
         }
     }
@@ -434,11 +428,14 @@ public class MainActivity extends Activity {
                 //output.add(0, "Data retrieved using the Google Calendar API:");
                 mOutputText.setText(TextUtils.join("\n", output));
 
-                String[] tempArray = new String[10];
+                String[] tempArray = new String[output.size()];
                 for (int i = 0; i < output.size(); i++) {
                     eventStringArray[i] = output.get(i);
                 }
                 eventStringArray = tempArray;
+                //eventListView.setAdapter(myAdapter);
+                ((BaseAdapter) eventListView.getAdapter()).notifyDataSetChanged();
+
             }
         }
 
@@ -576,23 +573,32 @@ public class MainActivity extends Activity {
                 //oh no
                 mLastError = e;
                 cancel(true);
+                deleteDone = true;
                 return null;
             }
+            deleteDone = true;
             return "success";
         }
 
         private void deleteEvent() throws IOException {
 
             try{
+                Log.d("start time", String.valueOf(new Date().getTime()));
                 mService.events().delete("primary", eventID).execute();
             } catch (Exception e) {
                 errorCheckerText.setText(e.getMessage());
+                deleteDone = true;
             }
         }
 
         @Override
         protected void onPostExecute(String s) {
-            //new MakeRequestTask(mCredential).execute();
+            /*((BaseAdapter) eventListView.getAdapter()).notifyDataSetChanged();
+            myAdapter.notifyDataSetChanged();
+            new MakeRequestTask(mCredential).execute();*/
+            myAdapter.notifyDataSetChanged();
+            Log.d("end time", String.valueOf(new Date().getTime()));
+            deleteDone = true;
         }
 
         @Override
@@ -616,12 +622,12 @@ public class MainActivity extends Activity {
             } else {
                 mOutputText.setText("Request cancelled.");
             }
+            deleteDone = true;
         }
 
     }
 
     private void openDeleteDialog(final AdapterView<?> adapter, View view, final int pos) {
-        //Event eventToDelete = v.getAdapter().getView(p, null, v);
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
         dialogBuilder.setTitle("Delete Event");
@@ -641,31 +647,42 @@ public class MainActivity extends Activity {
                     }
                 }
 
-                /*com.google.api.services.calendar.Calendar mService = null;
-                HttpTransport transport = AndroidHttp.newCompatibleTransport();
-                JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-                mService = new com.google.api.services.calendar.Calendar.Builder(
-                        transport, jsonFactory, mCredential)
-                        .setApplicationName("Google Calendar API Android Quickstart")
-                        .build();
-                DateTime now = new DateTime(System.currentTimeMillis());
-                List<String> eventStrings = new ArrayList<String>();*/
-
                 new DeleteEventTask(mCredential, eventTBDid).execute();
 
+                String[] tempEventArray = new String[eventStringArray.length - 1];
+                for (int i = 0; i < pos; i++) {
+                    tempEventArray[i] = eventStringArray[i];
+                }
+                for (int i = pos + 1; i < eventStringArray.length; i++) {
+                    tempEventArray[i - 1] = eventStringArray[i];
+                }
+                eventStringArray = tempEventArray;
 
-               /* try {
-                    mService.events().delete("primary", eventTBDid).execute();
-                } catch (Exception e) {
-                    //probably IOException
-                }*/
-                /*Events events = mService.events().list("primary")
-                        .setMaxResults(100)
-                        .setTimeMin(now)
-                        .setOrderBy("startTime")
-                        .setSingleEvents(true)
-                        .execute();*/
-                //------------------------------------------------------------------------------------------------------------
+                //while (!deleteDone) {}
+//TODO: Make a new activity to handle updating the adapter?
+                deleteDone = false;
+                myAdapter.notifyDataSetChanged();
+                myAdapter = new ArrayAdapter<String>(MainActivity,
+                        android.R.layout.simple_list_item_1, eventStringArray);
+                eventListView.setAdapter(myAdapter);
+                //eventListView.invalidate();
+
+                /*Log.d("before wait1", "about to wait");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(5000);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                Log.d("after wait1", "finished waiting");
+
+                myAdapter.notifyDataSetChanged();
+                Log.d("after notify1", "after notify");
+                myAdapter = new ArrayAdapter<String>(MainActivity.this,
+                        android.R.layout.simple_list_item_1, eventStringArray);
+                Log.d("after reassigning1", "after reassignment");
+                eventListView.invalidate();
+                Log.d("after invalidate1", "after invalidation");*/
+
             }
         });
         dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

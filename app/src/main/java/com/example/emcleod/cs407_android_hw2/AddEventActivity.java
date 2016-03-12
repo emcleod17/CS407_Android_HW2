@@ -81,14 +81,14 @@ public class AddEventActivity extends AppCompatActivity {
                 String eventDay = rawEventDate.substring(8,10);
                 String eventDate = eventYear+"-"+eventMonth+"-"+eventDay;
 
-                String eventStart = eventDate+"T"+eventStart_editText.getText().toString()+":00-05:00";
+                String eventStart = eventDate+"T"+eventStart_editText.getText().toString()+":00-06:00";
                 DateTime startDateTime = new DateTime(eventStart);
                 EventDateTime start = new EventDateTime()
                         .setDateTime(startDateTime)
                         .setTimeZone("America/Chicago");
                 event.setStart(start);
 
-                String eventEnd = eventDate+"T"+eventEnd_editText.getText().toString()+":00-05:00";
+                String eventEnd = eventDate+"T"+eventEnd_editText.getText().toString()+":00-06:00";
                 DateTime endDateTime = new DateTime(eventEnd);
                 EventDateTime end = new EventDateTime()
                         .setDateTime(endDateTime)
