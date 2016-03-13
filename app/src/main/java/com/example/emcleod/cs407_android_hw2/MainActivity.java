@@ -53,10 +53,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+
+import java.util.Calendar;
 
 public class MainActivity extends Activity {
     GoogleAccountCredential mCredential;
@@ -71,6 +74,8 @@ public class MainActivity extends Activity {
     private Button prevDayButton;
     private Button nextDayButton;
     private Button addEventButton;
+
+
 
     private String[] eventInfoArray;
     private List<Event> currentEventList;
@@ -216,15 +221,19 @@ public class MainActivity extends Activity {
                 .setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
 
         if (extras !=null) {
-            String[] eventArray = extras.getStringArray("eventArray");
-            eventInfoArray = eventArray;
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    new AddEventTask(mCredential).execute();
-                }
-            });
+            if (extras.containsKey("eventArray")) {
+                String[] eventArray = extras.getStringArray("eventArray");
+                eventInfoArray = eventArray;
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new AddEventTask(mCredential).execute();
+                    }
+                });
+            }
+            if (extras.containsKey("dateArray")) {
 
+            }
         }
     }
 
@@ -401,11 +410,27 @@ public class MainActivity extends Activity {
          */
         private List<String> getDataFromApi() throws IOException {
             // List the next 10 events from the primary calendar.
+            Date currentDate = new Date();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(currentDate);
+
+            Calendar c = new GregorianCalendar();
+            c.set(Calendar.HOUR_OF_DAY, 0); //anything 0 - 23
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            Date d1 = c.getTime();
+            //add in the offset here
+            DateTime dayStart = new DateTime(d1);
+            Date d2 = d1;
+            d2.setTime(d2.getTime() + 86400000);
+            DateTime dayEnd = new DateTime(d2);
+
             DateTime now = new DateTime(System.currentTimeMillis());
             List<String> eventStrings = new ArrayList<String>();
             Events events = mService.events().list("primary")
                     .setMaxResults(10)
-                    .setTimeMin(now)
+                    .setTimeMin(dayStart)
+                    .setTimeMax(dayEnd)
                     .setOrderBy("startTime")
                     .setSingleEvents(true)
                     .execute();
