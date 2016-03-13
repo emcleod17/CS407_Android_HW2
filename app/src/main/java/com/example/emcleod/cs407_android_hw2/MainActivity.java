@@ -66,6 +66,7 @@ public class MainActivity extends Activity {
     private TextView mOutputText;
     ProgressDialog mProgress;
     private TextView errorCheckerText;
+    private TextView currentDateView;
 
     ArrayAdapter<String> myAdapter;
     private ListView eventListView;
@@ -75,7 +76,8 @@ public class MainActivity extends Activity {
     private Button nextDayButton;
     private Button addEventButton;
 
-
+    private int offset = 0;
+    private String dateDisplaying = "";
 
     private String[] eventInfoArray;
     private List<Event> currentEventList;
@@ -121,16 +123,39 @@ public class MainActivity extends Activity {
 
         TableRow.LayoutParams params = new TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
 
+        currentDateView = new TextView(this);
+        currentDateView.setLayoutParams(tlp);
+        currentDateView.setPadding(16, 16, 16, 16);
+        currentDateView.setText("Viewing events for " + dateDisplaying);
+        currentDateView.setTextAppearance(this, android.R.style.TextAppearance_Large);
+        activityLayout.addView(currentDateView);
+
         prevDayButton = new Button(this);
         prevDayButton.setText("Previous Day");
         prevDayButton.setPadding(16, 16, 16, 16);
         prevDayButton.setLayoutParams(params);
+        prevDayButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                offset--;
+                intent.putExtra("offset", offset);
+                startActivity(intent);
+            }
+        });
         dateSelectLayout.addView(prevDayButton);
 
         nextDayButton = new Button(this);
         nextDayButton.setText("Next Day");
         nextDayButton.setPadding(16, 16, 16, 16);
         nextDayButton.setLayoutParams(params);
+        nextDayButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                offset++;
+                intent.putExtra("offset", offset);
+                startActivity(intent);
+            }
+        });
         dateSelectLayout.addView(nextDayButton);
 
 
@@ -189,7 +214,7 @@ public class MainActivity extends Activity {
                 Log.d("after invalidate", "after invalidation");*/
                 //myAdapter.notifyDataSetChanged();
                 //eventListView.invalidate();
-                boolean hasNulls = false;
+                /*boolean hasNulls = false;
                 for (int i = 0; i < eventStringArray.length; i++) {
                     if (eventStringArray[i] == null) {
                         hasNulls = true;
@@ -201,7 +226,7 @@ public class MainActivity extends Activity {
                 }
                 if (!hasNulls) {
                     Log.d("no nulls","no nulls");
-                }
+                }*/
             }
         });
         activityLayout.addView(eventListView);
@@ -231,8 +256,8 @@ public class MainActivity extends Activity {
                     }
                 });
             }
-            if (extras.containsKey("dateArray")) {
-
+            if (extras.containsKey("offset")) {
+                offset = extras.getInt("offset");
             }
         }
     }
@@ -420,12 +445,20 @@ public class MainActivity extends Activity {
             c.set(Calendar.SECOND, 0);
             Date d1 = c.getTime();
             //add in the offset here
+            d1.setTime(d1.getTime() + offset*86400000);
+            Calendar tempCal = Calendar.getInstance();
+            tempCal.setTime(d1);
+            int month = tempCal.get(Calendar.MONTH);
+            int day = tempCal.get(Calendar.DAY_OF_MONTH);
+            dateDisplaying = String.valueOf(month+1) +"/"+ String.valueOf(day);
+            currentDateView.setText("Viewing events for " + dateDisplaying);
             DateTime dayStart = new DateTime(d1);
+
             Date d2 = d1;
             d2.setTime(d2.getTime() + 86400000);
             DateTime dayEnd = new DateTime(d2);
 
-            DateTime now = new DateTime(System.currentTimeMillis());
+            //DateTime now = new DateTime(System.currentTimeMillis());
             List<String> eventStrings = new ArrayList<String>();
             Events events = mService.events().list("primary")
                     .setMaxResults(10)
@@ -444,8 +477,12 @@ public class MainActivity extends Activity {
                     // the start date.
                     start = event.getStart().getDate();
                 }
+                DateTime end = event.getEnd().getDateTime();
+                if (end == null) {
+                    end = event.getEnd().getDate();
+                }
                 eventStrings.add(
-                        String.format("%s @ (%s)", event.getSummary(), start));
+                        String.format("%s from (%s) to (%s)", event.getSummary(), start.toString().substring(11,16), end.toString().substring(11,16)));
             }
             return eventStrings;
         }
